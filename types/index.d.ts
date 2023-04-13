@@ -299,6 +299,12 @@ declare namespace CookieConsent {
     }
 
     interface CookieTable {
+
+        /**
+         * Table caption
+         */
+        caption?: string,
+
         /**
          * Define the table headers (columns).
          */
@@ -593,7 +599,7 @@ declare namespace CookieConsent {
      * @param attributes Attributes added to the script
      * @returns Promise<boolean>: true if script is loaded successfully
      */
-    function loadScript(src: string, attributes?: {[key: string]: string}[]): Promise<boolean>
+    function loadScript(src: string, attributes?: {[key: string]: string}): Promise<boolean>
 
     /**
      * Store custom data inside plugin's own cookie.
@@ -606,7 +612,7 @@ declare namespace CookieConsent {
      * Get the entire cookie object.
      * @returns object with all the cookie fields
      */
-    function getCookie<Field>(): CookieValue
+    function getCookie(): CookieValue
 
     /**
      * Get a specific field from the cookie.
@@ -619,7 +625,7 @@ declare namespace CookieConsent {
      * Get the full config. object.
      * @returns config. object
      */
-    function getConfig<Field>(): CookieConsentConfig
+    function getConfig(): CookieConsentConfig
 
     /**
      * Get one of the configuration options.

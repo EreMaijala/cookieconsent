@@ -65,6 +65,9 @@ import { COOKIE_NAME, OPT_IN_MODE } from '../utils/constants';
  * @property {HTMLElement} _pmAcceptAllBtn
  * @property {HTMLElement} _pmAcceptNecessaryBtn
  * @property {HTMLElement} _pmSavePreferencesBtn
+ *
+ * @property {Object.<string, HTMLInputElement>} _categoryCheckboxInputs
+ * @property {Object.<string, ServiceToggle>} _serviceCheckboxInputs
  */
 
 /**
@@ -77,98 +80,10 @@ import { COOKIE_NAME, OPT_IN_MODE } from '../utils/constants';
  * @property {Function} _onModalReady
  */
 
-
 /**
  * Pointers to all services toggles relative to a category
  * @typedef {Object.<string, HTMLElement>} ServiceToggle
  */
-
-/**
- * Check if el is a function
- * @param {any} fn
- * @returns {boolean}
- */
-export const isFunction = (fn) => {
-    return typeof fn === 'function';
-};
-
-/**
- * Clone object using recursion
- * @param {any} el
- */
-export const deepCopy = (el) => {
-
-    if (typeof el !== 'object' )
-        return el;
-
-    if (el instanceof Date)
-        return new Date(el.getTime());
-
-    let clone = Array.isArray(el) ? [] : {};
-
-    for (let key in el) {
-        let value = el[key];
-
-        clone[key] = deepCopy(value);
-    }
-
-    return clone;
-};
-
-/**
- * window.dispatchEvent helper function
- * @param {string} eventName
- * @param {any} data
- */
-const dispatchEvent = (eventName, data) => {
-    window.dispatchEvent(new CustomEvent(eventName, {detail: data}));
-};
-
-/**
- * Fire custom event
- * @param {string} eventName
- * @param {string} [modalName]
- * @param {HTMLElement} [modal]
- */
-export const fireEvent = (eventName, modalName, modal) => {
-
-    const callbacks = globalObj._callbacks;
-    const events = globalObj._customEvents;
-
-    const params = {
-        cookie: globalObj._state._savedCookieContent
-    };
-
-    if(modalName){
-
-        const modalParams = {
-            modalName: modalName
-        };
-
-        if(eventName === events._onModalShow){
-            isFunction(callbacks._onModalShow) && callbacks._onModalShow(modalParams);
-        }else if(eventName === events._onModalHide){
-            isFunction(callbacks._onModalHide) && callbacks._onModalHide(modalParams);
-        }else{
-            modalParams.modal = modal;
-            isFunction(callbacks._onModalReady) && callbacks._onModalReady(modalParams);
-        }
-
-        return dispatchEvent(eventName, modalParams);
-    }
-
-    if(eventName === events._onFirstConsent){
-        isFunction(callbacks._onFirstConsent) && callbacks._onFirstConsent(deepCopy(params));
-    }else if(eventName === events._onConsent){
-        isFunction(callbacks._onConsent) && callbacks._onConsent(deepCopy(params));
-    }else {
-        params.changedCategories = globalObj._state._lastChangedCategoryNames;
-        params.changedServices = globalObj._state._lastChangedServices;
-        isFunction(callbacks._onChange) && callbacks._onChange(deepCopy(params));
-    }
-
-    dispatchEvent(eventName, deepCopy(params));
-};
 
 export class GlobalState {
     constructor() {
@@ -180,11 +95,15 @@ export class GlobalState {
         this._config = {
             mode: OPT_IN_MODE,
             revision: 0,
+
+            //{{START: GUI}}
             autoShow: true,
+            lazyHtmlGeneration: true,
+            //{{END: GUI}}
+
             autoClearCookies: true,
             manageScriptTags: true,
             hideFromBots: true,
-            lazyHtmlGeneration: true,
 
             cookie: {
                 name: COOKIE_NAME,
@@ -199,7 +118,7 @@ export class GlobalState {
             /**
             * @type {UserConfig}
             */
-            _userConfig: null,
+            _userConfig: {},
 
             _currentLanguageCode: '',
 
@@ -211,13 +130,13 @@ export class GlobalState {
             /**
             * @type {Translation}
             */
-            _currentTranslation: null,
+            _currentTranslation: {},
 
             /**
             * Internal state variables
             * @type {CookieValue}
             */
-            _savedCookieContent : null,
+            _savedCookieContent : {},
 
             /**
              * Store all event data-cc event listeners
@@ -255,6 +174,7 @@ export class GlobalState {
 
             _invalidConsent : true,
 
+            //{{START: GUI}}
             _consentModalExists : false,
             _consentModalVisible : false,
 
@@ -264,6 +184,7 @@ export class GlobalState {
             _clickedInsideModal : false,
             _tabbedInsideModal : false,
             _tabbedOutside : false,
+            _shouldHandleFirstTab: false,
 
             _preferencesModalVisibleDelayed : false,
 
@@ -271,6 +192,7 @@ export class GlobalState {
             * @type {HTMLElement[]}
             */
             _currentModalFocusableElements: [],
+            //{{END: GUI}}
 
             _revisionEnabled : false,
             _validRevision : true,
@@ -355,12 +277,15 @@ export class GlobalState {
             /**
             * @type {Object.<string, string[]>}
             */
-            _enabledServices: {},
+            _acceptedServices: {},
 
             /**
-            * @type {Object.<string, string[]>}
-            */
-            _customServicesSelection: {},
+             * Keep track of the current state of the services
+             * (may not be the same as enabledServices)
+             *
+             * @type {Object.<string, string[]>}
+             */
+            _enabledServices: {},
 
             /**
             * @type {Object.<string, string[]>}
@@ -389,8 +314,8 @@ export class GlobalState {
          * @type {DomElements}
          */
         this._dom = {
-            /** @type {Object.<string, HTMLElement>} */ _categoryCheckboxInputs: {},
-            /** @type {Object.<string, ServiceToggle>} */ _serviceCheckboxInputs: {}
+            _categoryCheckboxInputs: {},
+            _serviceCheckboxInputs: {}
         };
 
         /**
@@ -403,9 +328,11 @@ export class GlobalState {
             _onFirstConsent: 'cc:onFirstConsent',
             _onConsent: 'cc:onConsent',
             _onChange: 'cc:onChange',
+            //{{START: GUI}}
             _onModalShow: 'cc:onModalShow',
             _onModalHide: 'cc:onModalHide',
             _onModalReady: 'cc:onModalReady'
+            //{{END: GUI}}
         };
     }
 }

@@ -1,5 +1,5 @@
 import { globalObj } from '../global';
-import { createNode, appendChild, addDataButtonListeners, closeModalOnOutsideClick } from '../../utils/general';
+import { createNode, closeModalOnOutsideClick, handleFocusTrap, isString, addDataButtonListeners } from '../../utils/general';
 import { createConsentModal } from './consentModal';
 import { createPreferencesModal } from './preferencesModal';
 import { DIV_TAG } from '../../utils/constants';
@@ -22,32 +22,30 @@ export const createMainContainer = (api) => {
 
         let root = globalObj._state._userConfig.root;
 
-        if(root && typeof root === 'string')
+        if(root && isString(root))
             root = document.querySelector(root);
 
-        // Append main container to dom
-        appendChild(root || dom._document.body, dom._ccMain);
+        // Prepend main container to dom
+        (root || dom._document.body).prepend(dom._ccMain);
 
         closeModalOnOutsideClick(api);
     }
 };
 
 /**
- * Generate cookie consent html markup
  * @param {import('../global').Api} api
  */
-export const createCookieConsentHTML = (api) => {
-    const state = globalObj._state;
+export const generateHtml = async (api) => {
 
-    // Create consent modal
-    if(state._invalidConsent)
+    addDataButtonListeners(null, api, createPreferencesModal, createMainContainer);
+
+    if(globalObj._state._invalidConsent)
         createConsentModal(api, createMainContainer);
 
-    // Create preferences modal
     if(!globalObj._config.lazyHtmlGeneration)
         createPreferencesModal(api, createMainContainer);
 
-    addDataButtonListeners(null, api, createPreferencesModal, createMainContainer);
+    handleFocusTrap();
 };
 
 export * from './consentModal';

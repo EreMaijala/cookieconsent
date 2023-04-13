@@ -43,7 +43,6 @@
     a,
     .cc__link{
         font-weight: 600;
-        color: var(--cc-link-color);
         position: relative;
         background-image: linear-gradient(currentColor, currentColor);
         background-position: 0% 100%;
@@ -57,11 +56,15 @@
         }
     }
 
+    .cc__link {
+        color: var(--cc-link-color);
+    }
+
     /* Use Firefox's thin style scrollbar */
     .cm__desc,
     .pm__body{
         scrollbar-width: thin;
-        overscroll-behavior: none;
+        overscroll-behavior: auto contain;
     }
 
     /* Show webkit's "cool" scrollbar only on non mobile screens */

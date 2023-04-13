@@ -1,28 +1,44 @@
 import { saveState, getState, defaultState } from './stateManager';
 import { customEvents, onEvent, addEvent, getById } from './utils';
+import { toggleTheme } from './customThemes';
+
+const DEFAULT_DARK_THEME = 'cc--darkmode';
+const DEFAULT_LIGHT_THEME = 'default-light';
 
 /**
  * @type {HTMLInputElement}
  */
 const checkbox = getById('darkmode');
 
-toggleDarkmode(getState().darkmode);
+toggleDarkmode(getState()._theme === DEFAULT_DARK_THEME);
 
 addEvent(checkbox, 'click', () => {
-    toggleDarkmode(checkbox.checked);
 
     const state = getState();
-    state.darkmode = checkbox.checked;
+    const currTheme = state._theme;
+
+    /**
+     * Remove current theme
+     */
+    document.documentElement.classList.remove(currTheme);
+
+    state._theme = checkbox.checked
+        ? DEFAULT_DARK_THEME
+        : DEFAULT_LIGHT_THEME;
+
+    toggleDarkmode(checkbox.checked);
+    toggleTheme(state._theme);
+
     saveState(state);
 
-    window.CookieConsent.show(true);
+    CookieConsent.show(true);
 });
 
 /**
  * Toggle darkmode on/off
  * @param {boolean} enable
  */
-function toggleDarkmode(enable) {
+export function toggleDarkmode(enable) {
 
     const classListAction = enable
         ? 'add'
@@ -33,5 +49,5 @@ function toggleDarkmode(enable) {
 }
 
 onEvent(customEvents._RESET, () => {
-    toggleDarkmode(defaultState.darkmode);
+    toggleDarkmode(defaultState._theme === DEFAULT_DARK_THEME);
 });

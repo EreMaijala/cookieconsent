@@ -9,16 +9,17 @@ You can download/import the plugin using one of the following methods:
 
 1. Install via [NPM](https://www.npmjs.com/package/vanilla-cookieconsent).
     ```shell
-    npm i vanilla-cookieconsent
-    yarn add vanilla-cookieconsent
+    npm i vanilla-cookieconsent@next
+    yarn add vanilla-cookieconsent@next
+    pnpm add vanilla-cookieconsent@next
     ```
 
     Special thanks to [Till Sanders](https://github.com/tillsanders) for bringing the plugin on npm!
 
 2. Use the CDN hosted version.
     ```
-    https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@v3.0.0-rc.8/dist/cookieconsent.umd.js
-    https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@v3.0.0-rc.8/dist/cookieconsent.css
+    https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@v3.0.0-rc.13/dist/cookieconsent.umd.js
+    https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@v3.0.0-rc.13/dist/cookieconsent.css
     ```
 3. Download the [latest release](https://github.com/orestbida/cookieconsent/releases/latest) from github and use the optimized files located in the `dist` folder.
 

@@ -1,61 +1,70 @@
-import { globalObj, isFunction} from '../core/global';
-import { createNode, setAttribute, elContains, getAttribute, removeAttribute } from './general';
+import { globalObj } from '../core/global';
+import { createNode, setAttribute, elContains, getAttribute, removeAttribute, isFunction } from './general';
 import { SCRIPT_TAG_SELECTOR } from './constants';
 
 /**
  * This function handles the loading/activation logic of the already
  * existing scripts based on the current accepted cookie categories
  *
- * @param {string[]} [mustEnableCategories]
+ * @param {string[]} [defaultEnabledCategories]
  */
-export const manageExistingScripts = (mustEnableCategories) => {
+export const manageExistingScripts = (defaultEnabledCategories) => {
 
-    const state = globalObj._state;
-    const enabledServices = state._enabledServices;
+    const {
+        _acceptedServices,
+        _lastChangedServices,
+        _allCategoryNames,
+        _allDefinedServices,
+        _allScriptTags,
+        _allScriptTagsInfo,
+        _savedCookieContent,
+        _lastChangedCategoryNames,
+    } = globalObj._state;
 
     /**
      * Automatically Enable/Disable internal services
      */
-    state._allCategoryNames.forEach(categoryName => {
+    for(const categoryName of _allCategoryNames){
 
-        const lastChangedServices = state._lastChangedServices[categoryName]
-            || state._enabledServices[categoryName]
+        const lastChangedServices = _lastChangedServices[categoryName]
+            || _acceptedServices[categoryName]
             || [];
 
-        lastChangedServices.forEach(serviceName => {
-            const service = state._allDefinedServices[categoryName][serviceName];
+        for(const serviceName of lastChangedServices){
+            const service = _allDefinedServices[categoryName][serviceName];
 
             if(!service)
-                return;
+                continue;
+
+            const {onAccept, onReject} = service;
 
             if(
-                !service.enabled
-                && elContains(state._enabledServices[categoryName], serviceName)
-                && isFunction(service.onAccept)
+                !service._enabled
+                && elContains(_acceptedServices[categoryName], serviceName)
+                && isFunction(onAccept)
             ){
-                service.enabled = true;
-                service.onAccept();
+                service._enabled = true;
+                onAccept();
             }
 
             else if(
-                service.enabled
-                && !elContains(state._enabledServices[categoryName], serviceName)
-                && isFunction(service.onReject)
+                service._enabled
+                && !elContains(_acceptedServices[categoryName], serviceName)
+                && isFunction(onReject)
             ){
-                service.enabled = false;
-                service.onReject();
+                service._enabled = false;
+                onReject();
             }
 
-        });
-    });
+        }
+    }
 
     if(!globalObj._config.manageScriptTags)
         return;
 
-    const scripts = state._allScriptTags;
-
-    let acceptedCategories = mustEnableCategories
-        || state._savedCookieContent.categories
+    const scripts = _allScriptTags;
+    const acceptedCategories = defaultEnabledCategories
+        || _savedCookieContent.categories
         || [];
 
     /**
@@ -67,14 +76,13 @@ export const manageExistingScripts = (mustEnableCategories) => {
     const loadScriptsHelper = (scripts, index) => {
         if(index < scripts.length){
 
-            var currScript = scripts[index];
-
-            var currScriptInfo = state._allScriptTagsInfo[index];
-            var currScriptCategory = currScriptInfo._categoryName;
-            var currScriptService = currScriptInfo._serviceName;
-            var categoryAccepted = elContains(acceptedCategories, currScriptCategory);
-            var serviceAccepted = currScriptService
-                ? elContains(enabledServices[currScriptCategory], currScriptService)
+            const currScript = scripts[index];
+            const currScriptInfo = _allScriptTagsInfo[index];
+            const currScriptCategory = currScriptInfo._categoryName;
+            const currScriptService = currScriptInfo._serviceName;
+            const categoryAccepted = elContains(acceptedCategories, currScriptCategory);
+            const serviceAccepted = currScriptService
+                ? elContains(_acceptedServices[currScriptCategory], currScriptService)
                 : false;
 
             /**
@@ -93,12 +101,12 @@ export const manageExistingScripts = (mustEnableCategories) => {
                 let categoryWasJustDisabled = !currScriptService
                     && currScriptInfo._runOnDisable
                     && !categoryAccepted
-                    && elContains(state._lastChangedCategoryNames, currScriptCategory);
+                    && elContains(_lastChangedCategoryNames, currScriptCategory);
 
                 let serviceWasJustDisabled = currScriptService
                     && currScriptInfo._runOnDisable
                     && !serviceAccepted
-                    && elContains(state._lastChangedServices[currScriptCategory] || [], currScriptService);
+                    && elContains(_lastChangedServices[currScriptCategory] || [], currScriptService);
 
                 if(
                     categoryWasJustEnabled
@@ -129,15 +137,13 @@ export const manageExistingScripts = (mustEnableCategories) => {
                     freshScript.textContent = currScript.innerHTML;
 
                     //Copy attributes over to the new "revived" script
-                    [...currScript.attributes].forEach(attr => {
-                        let nodeName = attr.nodeName;
-
+                    for(const {nodeName} of currScript.attributes){
                         setAttribute(
                             freshScript,
                             nodeName,
                             currScript[nodeName] || getAttribute(currScript, nodeName)
                         );
-                    });
+                    }
 
                     /**
                      * Set custom type
@@ -185,17 +191,17 @@ export const manageExistingScripts = (mustEnableCategories) => {
 export const retrieveEnabledCategoriesAndServices = () => {
     const state = globalObj._state;
 
-    state._allCategoryNames.forEach(categoryName => {
+    for(const categoryName of state._allCategoryNames){
         const category = state._allDefinedCategories[categoryName];
 
-        if(category.enabled){
+        if(category.enabled || category.readOnly){
             state._defaultEnabledCategories.push(categoryName);
 
             const services = state._allDefinedServices[categoryName] || {};
 
-            for(var serviceName in services){
-                state._enabledServices[categoryName].push(serviceName);
+            for(let serviceName in services){
+                state._acceptedServices[categoryName].push(serviceName);
             }
         }
-    });
+    }
 };

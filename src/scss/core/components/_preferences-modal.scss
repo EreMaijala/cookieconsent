@@ -7,6 +7,10 @@ $toggle-knob-height: 23px;
 $toggle-knob-width: 50px;
 $toggle-knob-icon-width: 2px;
 
+$service-toggle-knob-height: 19px;
+$service-toggle-knob-width: 42px;
+$service-toggle-knob-icon-width: 1.7px;
+
 :root{
     --cc-pm-toggle-border-radius: 4em;
 }
@@ -165,7 +169,6 @@ $toggle-knob-icon-width: 2px;
                 border: 1px solid var(--cc-cookie-category-block-border);
                 transition: background-color .25s ease, border-color .25s ease;
                 min-height: 58px;
-                cursor: initial;
 
                 &:hover{
                     background: var(--cc-cookie-category-block-hover-bg);
@@ -178,8 +181,9 @@ $toggle-knob-icon-width: 2px;
                 display: none;
                 border: 1px solid var(--cc-cookie-category-block-border);
                 border-top: none;
-                border-bottom-left-radius: var(--cc-btn-border-radius);
-                border-bottom-right-radius: var(--cc-btn-border-radius);
+                border-radius: var(--cc-btn-border-radius);
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
             }
 
             .pm__section-desc{
@@ -303,24 +307,49 @@ $toggle-knob-icon-width: 2px;
 
     .section__toggle-wrapper{
         position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        display: inline-block;
-        margin: auto;
         right: 18px;
         cursor: pointer;
-        user-select: none;
-        vertical-align: middle;
         z-index: 1;
-        transform: translateZ(0);
+    }
 
-        &.toggle-service{
+    .toggle-service{
+        position: relative;
+        right: 0;
+
+        width: $service-toggle-knob-width;
+        height: $service-toggle-knob-height;
+
+        .section__toggle,
+        .toggle__icon,
+        .toggle__label {
+            width: $service-toggle-knob-width;
+            height: $service-toggle-knob-height;
+        }
+
+        .toggle__icon{
             position: relative;
-            transform: scale(.85) translateZ(0);
-            transform-origin: right;
-            margin: 0;
-            right: 4px;
+
+            &::after{
+                height: $service-toggle-knob-height;
+                width: $service-toggle-knob-height;
+            }
+        }
+
+        .section__toggle:checked ~ .toggle__icon::after{
+            transform: translateX(23px);
+        }
+
+        .toggle__icon-off::after,
+        .toggle__icon-off::before{
+            width: $service-toggle-knob-icon-width;
+            height: 9px;
+            margin: 0.1px 2px 0 auto;
+        }
+
+        .toggle__icon-on::before{
+            border-width: 0 $service-toggle-knob-icon-width $service-toggle-knob-icon-width 0;
+            padding: 1.3px 1.3px 6px;
+            margin: -3.8px auto 0 6px;
         }
     }
 
@@ -496,11 +525,13 @@ $toggle-knob-icon-width: 2px;
     }
 
     .pm__service{
-        padding: .3em 1em;
+        padding: .4em 1.2em;
         position: relative;
         display: flex;
         justify-content: space-between;
         transition: background-color .15s ease;
+        gap: 1em;
+        align-items: center;
 
         &:hover{
             background-color: var(--cc-cookie-category-block-hover-bg);
@@ -509,22 +540,24 @@ $toggle-knob-icon-width: 2px;
 
     .pm__service-header{
         display: flex;
-        flex-direction: row;
         align-items: center;
+        width: 100%;
     }
 
     .pm__service-icon {
-        width: 8px;
+        min-width: 8px;
         height: 8px;
         border: 2px solid currentColor;
         border-radius: 100%;
-        margin-left: 9px;
+        margin-left: 7px;
         margin-right: 20px;
         margin-top: 1px;
     }
 
     .pm__service-title{
         font-size: .95em;
+        word-break: break-word;
+        width: 100%;
     }
 
     .pm__section-desc{
@@ -542,6 +575,12 @@ $toggle-knob-icon-width: 2px;
         font-size: .9em;
     }
 
+    .pm__table-caption {
+        border-top: 1px solid var(--cc-cookie-category-block-border);
+        text-align: start;
+    }
+
+    .pm__table-caption,
     .pm__table-head > tr{
         font-weight: 600;
         color: var(--cc-primary-color);
@@ -556,6 +595,7 @@ $toggle-knob-icon-width: 2px;
         }
     }
 
+    .pm__table-caption,
     .pm__table-th,
     .pm__table-td{
         padding: 0.625em;
@@ -815,11 +855,11 @@ $toggle-knob-icon-width: 2px;
     }
 
     .toggle-service{
-        left: 3px;
+        left: 0;
     }
 
     .pm__service-icon{
-        margin-right: 9px;
+        margin-right: 5px;
         margin-left: 20px;
     }
 
@@ -839,6 +879,10 @@ $toggle-knob-icon-width: 2px;
 
     .toggle__icon::after{
         transform: translateX(27px);
+    }
+
+    .toggle-service .toggle__icon::after{
+        transform: translateX(23px);
     }
 
     .section__toggle:checked ~ .toggle__icon::after{
@@ -885,7 +929,7 @@ $toggle-knob-icon-width: 2px;
             height: auto;
             transform: translateY($translate-y);
             border-radius: 0;
-            max-width: none;
+            max-width: none!important;
         }
 
         .pm__header,

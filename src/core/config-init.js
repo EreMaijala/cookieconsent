@@ -1,5 +1,5 @@
 import { globalObj } from './global';
-import { _log, getKeys, isObject, retrieveScriptElements } from '../utils/general';
+import { _log, getKeys, isObject, retrieveScriptElements, fetchCategoriesAndServices } from '../utils/general';
 import { OPT_OUT_MODE } from '../utils/constants';
 import { resolveCurrentLanguageCode, setCurrentLanguageCode } from '../utils/language';
 
@@ -9,26 +9,39 @@ import { resolveCurrentLanguageCode, setCurrentLanguageCode } from '../utils/lan
  */
 export const setConfig = (userConfig) => {
 
-    setWindowData();
+    const { _dom, _config, _state } = globalObj;
 
     const
-        config = globalObj._config,
-        state = globalObj._state,
-        cookie = config.cookie,
+        config = _config,
+        state = _state,
+        { cookie } = config,
         callbacks = globalObj._callbacks,
         userCookieConfig = userConfig.cookie,
         userCategories = userConfig.categories,
         allCategoryNames = getKeys(userCategories) || [],
-        nav = navigator;
+        nav = navigator,
+        doc = document;
+
+    /**
+     * Access the 'window' and 'document' objects
+     * during execution, rather than on import
+     * (avoid window/document is not defined error)
+     */
+    _dom._document = doc;
+    _dom._htmlDom = doc.documentElement;
+    cookie.domain = location.hostname;
 
     /**
      * Make user configuration globally available
      */
     state._userConfig = userConfig;
-    state._allTranslations = userConfig.language.translations;
     state._allDefinedCategories = userCategories;
     state._allCategoryNames = allCategoryNames;
+
+    //{{START: GUI}}
+    state._allTranslations = userConfig.language.translations;
     state._disablePageInteraction = !!userConfig.disablePageInteraction;
+    //{{END: GUI}}
 
     /**
      * Save references to callback functions
@@ -36,25 +49,27 @@ export const setConfig = (userConfig) => {
     callbacks._onFirstConsent = userConfig.onFirstConsent;
     callbacks._onConsent = userConfig.onConsent;
     callbacks._onChange = userConfig.onChange;
+
+    //{{START: GUI}}
     callbacks._onModalHide = userConfig.onModalHide;
     callbacks._onModalShow = userConfig.onModalShow;
     callbacks._onModalReady = userConfig.onModalReady;
+    //{{END: GUI}}
 
     const {
         mode,
+        //{{START: GUI}}
         autoShow,
+        lazyHtmlGeneration,
+        //{{END: GUI}}
         autoClearCookies,
         revision,
         manageScriptTags,
         hideFromBots,
-        lazyHtmlGeneration
     } = userConfig;
 
     if(mode === OPT_OUT_MODE)
         config.mode = mode;
-
-    if(typeof autoShow === 'boolean')
-        config.autoShow = autoShow;
 
     if(typeof autoClearCookies === 'boolean')
         config.autoClearCookies = autoClearCookies;
@@ -67,14 +82,21 @@ export const setConfig = (userConfig) => {
         state._revisionEnabled = true;
     }
 
+    //{{START: GUI}}
+
+    if(typeof autoShow === 'boolean')
+        config.autoShow = autoShow;
+
     if(typeof lazyHtmlGeneration === 'boolean')
         config.lazyHtmlGeneration = lazyHtmlGeneration;
+
+    //{{END: GUI}}
 
     if(hideFromBots === false)
         config.hideFromBots = false;
 
     if(config.hideFromBots === true && nav)
-        state._botAgentDetected = ((nav.userAgent && /bot|crawl|spider|slurp|teoma/i.test(nav.userAgent)) || nav.webdriver);
+        state._botAgentDetected = (nav.userAgent && /bot|crawl|spider|slurp|teoma/i.test(nav.userAgent)) || nav.webdriver;
 
     if(isObject(userCookieConfig))
         config.cookie = {...cookie, ...userCookieConfig};
@@ -86,52 +108,8 @@ export const setConfig = (userConfig) => {
 
     fetchCategoriesAndServices(allCategoryNames);
     retrieveScriptElements();
+
+    //{{START: GUI}}
     setCurrentLanguageCode(resolveCurrentLanguageCode());
+    //{{END: GUI}}
 };
-
-/**
- * Store categories and services' config. details
- * @param {string[]} allCategoryNames
- */
-function fetchCategoriesAndServices(allCategoryNames) {
-    const state = globalObj._state;
-
-    allCategoryNames.forEach(categoryName => {
-
-        const currCategory = state._allDefinedCategories[categoryName];
-        const services = currCategory.services || {};
-        const serviceNames = services && isObject(services) && getKeys(services) || [];
-
-        state._allDefinedServices[categoryName] = {};
-        state._enabledServices[categoryName] = [];
-
-        /**
-         * Keep track of readOnly categories
-         */
-        if(currCategory.readOnly){
-            state._readOnlyCategories.push(categoryName);
-            state._enabledServices[categoryName] = getKeys(services);
-        }
-
-        globalObj._dom._serviceCheckboxInputs[categoryName] = {};
-
-        serviceNames.forEach(serviceName => {
-            const service = services[serviceName];
-            service.enabled = false;
-            state._allDefinedServices[categoryName][serviceName] = service;
-        });
-    });
-}
-
-/**
- * Access the 'window' and 'document' objects
- * during execution, rather than on import
- */
-function setWindowData() {
-
-    const doc = document;
-
-    globalObj._dom._document = doc;
-    globalObj._dom._htmlDom = doc.documentElement;
-    globalObj._config.cookie.domain = window.location.hostname;
-}
